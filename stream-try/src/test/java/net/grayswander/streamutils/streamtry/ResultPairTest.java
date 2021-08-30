@@ -137,4 +137,16 @@ class ResultPairTest {
         ResultPair<String, String> resultPair = ResultPair.of(input, trySuccess);
         assertEquals(trySuccess, resultPair.getResult());
     }
+
+    @Test
+    void testLombokValueAnnotation() {
+        ResultPair<String, String> resultPair1 = ResultPair.of(input, trySuccess);
+        ResultPair<String, String> resultPair2 = ResultPair.of(input, tryFailure);
+        ResultPair<String, String> resultPair3 = ResultPair.of(input, trySuccess);
+
+        assertEquals(resultPair1.hashCode(), resultPair3.hashCode());
+        assertEquals(resultPair1, resultPair3);
+        assertNotEquals(resultPair1, resultPair2);
+        assertTrue(resultPair1.toString().contains(input));
+    }
 }
