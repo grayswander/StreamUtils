@@ -3,7 +3,6 @@ package net.grayswander.streamutils.streamtry;
 import io.vavr.control.Try;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 public class Main {
@@ -13,12 +12,12 @@ public class Main {
 
         Arrays.asList("Hello", "bamba", "unchecked", "hey", "checked", "still here")
                 .stream()
-                .map(TryWrapper.of(ExampleProcessingFunctions::processFunc))
-                .peek(resultPair -> resultPair.onFailure(Main::handleFailure))
-                .filter(ResultPair::isSuccess)
-                .map(ResultPair::getResult)
-                .map(Try::get)
+                .map(TryFunction.of(ExampleProcessingFunctions::processFunc))
+//                .peek(resultPair -> resultPair.onFailure(Main::handleFailure))
+//                .filter(ResultPair::isSuccess)
+                .flatMap(ResultPair::toStream)
                 .forEach(System.out::println);
+
     }
 
 

@@ -5,6 +5,7 @@ import lombok.Value;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 /**
  * Intended to contain processing input with result.
@@ -53,5 +54,9 @@ public class ResultPair<INPUT, OUTPUT> {
             action.accept(getInput(), result.getCause());
         }
         return this;
+    }
+
+    public Stream<OUTPUT> toStream() {
+        return getResult().toJavaStream();
     }
 }

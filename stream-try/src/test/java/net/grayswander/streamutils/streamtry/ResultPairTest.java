@@ -4,6 +4,9 @@ import io.vavr.control.Try;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ResultPairTest {
@@ -148,5 +151,20 @@ class ResultPairTest {
         assertEquals(resultPair1, resultPair3);
         assertNotEquals(resultPair1, resultPair2);
         assertTrue(resultPair1.toString().contains(input));
+    }
+
+    @Test
+    void toStreamWhenSuccess() {
+        ResultPair<String, String> resultPair = ResultPair.of(input, trySuccess);
+        List<String> list = resultPair.toStream().collect(Collectors.toList());
+        assertEquals(1, list.size());
+        assertEquals(output, list.get(0));
+    }
+
+    @Test
+    void toStreamWhenFailure() {
+        ResultPair<String, String> resultPair = ResultPair.of(input, tryFailure);
+        List<String> list = resultPair.toStream().collect(Collectors.toList());
+        assertEquals(0, list.size());
     }
 }

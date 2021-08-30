@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 @Data
 @AllArgsConstructor
-public class TryWrapper<INPUT, OUTPUT> implements Function<INPUT, ResultPair<INPUT, OUTPUT>> {
+public class TryFunction<INPUT, OUTPUT> implements Function<INPUT, ResultPair<INPUT, OUTPUT>> {
 
     CheckedFunction1<INPUT, ? extends OUTPUT> function;
 
@@ -18,7 +18,7 @@ public class TryWrapper<INPUT, OUTPUT> implements Function<INPUT, ResultPair<INP
         return ResultPair.of(input, Try.of(() -> function.apply(input)));
     }
 
-    public static <INPUT, OUTPUT> TryWrapper<INPUT, OUTPUT> of(CheckedFunction1<INPUT, ? extends OUTPUT> function) {
-        return new TryWrapper<INPUT, OUTPUT>(function);
+    public static <INPUT, OUTPUT> TryFunction<INPUT, OUTPUT> of(CheckedFunction1<INPUT, ? extends OUTPUT> function) {
+        return new TryFunction<INPUT, OUTPUT>(function);
     }
 }
