@@ -3,7 +3,6 @@ package net.grayswander.streamutils.streamtry;
 import io.vavr.CheckedFunction1;
 import io.vavr.control.Try;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Value;
 
 import java.util.function.Function;
@@ -20,6 +19,6 @@ public class TryFunction<INPUT, OUTPUT> implements Function<INPUT, ResultPair<IN
     }
 
     public static <INPUT, OUTPUT> TryFunction<INPUT, OUTPUT> of(CheckedFunction1<INPUT, ? extends OUTPUT> function) {
-        return new TryFunction<INPUT, OUTPUT>(function);
+        return new TryFunction<>(function);
     }
 }
