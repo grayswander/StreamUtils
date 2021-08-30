@@ -4,10 +4,11 @@ import io.vavr.CheckedFunction1;
 import io.vavr.control.Try;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Value;
 
 import java.util.function.Function;
 
-@Data
+@Value
 @AllArgsConstructor
 public class TryFunction<INPUT, OUTPUT> implements Function<INPUT, ResultPair<INPUT, OUTPUT>> {
 
