@@ -167,4 +167,31 @@ class ResultPairTest {
         List<String> list = resultPair.toStream().collect(Collectors.toList());
         assertEquals(0, list.size());
     }
+
+    @Test
+    void toStreamWithFailureActionWhenSuccess() {
+        ResultPair<String, String> resultPair = ResultPair.of(input, trySuccess);
+        List<String> list = resultPair.toStream((s, throwable1) -> {
+            setFlagInput(s);
+            setFlagThrowable(throwable1);
+        }).collect(Collectors.toList());
+
+        assertEquals(1, list.size());
+        assertEquals(output, list.get(0));
+        assertNotEquals(flagInput, input);
+        assertNotEquals(flagThrowable, throwable);
+
+    }
+
+    @Test
+    void toStreamWithFailureActionWhenFailure() {
+        ResultPair<String, String> resultPair = ResultPair.of(input, tryFailure);
+        List<String> list = resultPair.toStream((s, throwable1) -> {
+            setFlagInput(s);
+            setFlagThrowable(throwable1);
+        }).collect(Collectors.toList());
+        assertEquals(0, list.size());
+        assertEquals(flagInput, input);
+        assertEquals(flagThrowable, throwable);
+    }
 }

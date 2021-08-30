@@ -16,6 +16,7 @@ public class Examples {
 
     public static void main(String[] args) {
         examplePrintSuccessIgnoreErrors();
+        examplePrintSuccessSideEffectOnErrors();
         exampleInvokeSideEffectOnFailureAndSuccess();
         exampleExplicitFilterAndResultExtraction();
     }
@@ -28,6 +29,17 @@ public class Examples {
                 .stream()
                 .map(TryFunction.of(TestProcessingFunctions::processFunc))
                 .flatMap(ResultPair::toStream)
+                .forEach(System.out::println);
+    }
+
+    private static void examplePrintSuccessSideEffectOnErrors() {
+        System.out.println();
+        System.out.println("Print successful results, side effect on failures.");
+        System.out.println("--------------------------------------------");
+        STRINGS
+                .stream()
+                .map(TryFunction.of(TestProcessingFunctions::processFunc))
+                .flatMap(resultPair -> resultPair.toStream(Examples::handleFailure))
                 .forEach(System.out::println);
     }
 

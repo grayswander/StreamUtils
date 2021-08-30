@@ -40,23 +40,27 @@ public class ResultPair<INPUT, OUTPUT> {
         return result.isSuccess();
     }
 
-    public ResultPair<INPUT, OUTPUT> onSuccess(BiConsumer<INPUT, ? super OUTPUT> action) {
-        Objects.requireNonNull(action, "action is null");
+    public ResultPair<INPUT, OUTPUT> onSuccess(BiConsumer<INPUT, ? super OUTPUT> successAction) {
+        Objects.requireNonNull(successAction, "action is null");
         if (isSuccess()) {
-            action.accept(getInput(), result.get());
+            successAction.accept(getInput(), result.get());
         }
         return this;
     }
 
-    public ResultPair<INPUT, OUTPUT> onFailure(BiConsumer<INPUT, ? super Throwable> action) {
-        Objects.requireNonNull(action, "action is null");
+    public ResultPair<INPUT, OUTPUT> onFailure(BiConsumer<INPUT, ? super Throwable> failureAction) {
+        Objects.requireNonNull(failureAction, "action is null");
         if (isFailure()) {
-            action.accept(getInput(), result.getCause());
+            failureAction.accept(getInput(), result.getCause());
         }
         return this;
     }
 
     public Stream<OUTPUT> toStream() {
         return getResult().toJavaStream();
+    }
+
+    public Stream<OUTPUT> toStream(BiConsumer<INPUT, ? super Throwable> failureAction) {
+        return onFailure(failureAction).getResult().toJavaStream();
     }
 }
