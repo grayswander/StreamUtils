@@ -1,3 +1,4 @@
 rootProject.name = 'stream-utils'
 include 'stream-try'
+include 'reactive-stream-try'
 

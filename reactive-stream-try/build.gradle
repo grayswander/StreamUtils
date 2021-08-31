@@ -1,6 +1,5 @@
 plugins {
     id 'java-library'
-    id 'java-test-fixtures'
 }
 
 group 'net.grayswander.stream-utils'
@@ -11,12 +10,12 @@ repositories {
 }
 
 dependencies {
-    api 'io.vavr:vavr:0.10.4'
+    api project(':stream-try')
+    api 'io.projectreactor:reactor-core:3.4.9'
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
-    implementation 'io.projectreactor:reactor-core:3.4.9'
 
-
+    testImplementation testFixtures(project(':stream-try'))
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'

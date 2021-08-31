@@ -2,6 +2,7 @@ package net.grayswander.streamutils.streamtry;
 
 import io.vavr.control.Try;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -11,11 +12,12 @@ import java.util.stream.Stream;
  * Intended to contain processing input with result.
  */
 @Value
+@NonFinal
 public class ResultPair<INPUT, OUTPUT> {
     INPUT input;
     Try<OUTPUT> result;
 
-    private ResultPair(INPUT input, Try<OUTPUT> result) {
+    protected ResultPair(INPUT input, Try<OUTPUT> result) {
         this.input = input;
         this.result = result;
     }
