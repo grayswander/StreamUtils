@@ -24,7 +24,7 @@ In all examples:
 ```
 List<String> STRINGS = Arrays.asList("Hello", "bamba", "unchecked", "hey", "checked", "still here");
 ```
-[TestProcessingFunctions](src/test/java/net/grayswander/streamutils/streamtry/TestProcessingFunctions.java)::processFunc throws exceptions on `checked` and `unchecked` inputs, returning some value otherwise.
+[TestProcessingFunctions](src/testFixtures/java/net/grayswander/streamutils/streamtry/TestProcessingFunctions.java)::processFunc throws exceptions on `checked` and `unchecked` inputs, returning some value otherwise.
 
 ### Print successful results, ignoring failures
 
