@@ -36,16 +36,10 @@ public class Main {
 
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> textLines = builder.stream(inputTopic);
-        Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
-
-        KStreamTryValueMapper<String, String> kStreamTryValueMapper = KStreamTryValueMapper.of(TestProcessingFunctions::processFunc);
-
-        KStream<String, ResultPair<String, String>> kStream = textLines
-                .mapValues(kStreamTryValueMapper);
 
         DeadLetterQueueManager dlqManager = new DeadLetterQueueManager();
 
-        KStream<String, String> processed = dlqManager.branchDlq(kStream, "TryOne");
+        KStream<String, String> processed = dlqManager.mapValues(textLines, TestProcessingFunctions::processFunc,"TryOne");
 
         processed.foreach((key, value) -> System.out.println("Processed: " + value));
 
