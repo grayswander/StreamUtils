@@ -1,7 +1,6 @@
 import net.grayswander.streamutils.streamtry.DeadLetterQueueManager;
 import net.grayswander.streamutils.streamtry.KStreamTryValueMapper;
 import net.grayswander.streamutils.streamtry.ResultPair;
-import net.grayswander.streamutils.streamtry.KstreamTryFunction;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.KStream;
