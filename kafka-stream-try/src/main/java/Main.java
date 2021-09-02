@@ -1,15 +1,14 @@
+import net.grayswander.streamutils.streamtry.DeadLetterQueueManager;
+import net.grayswander.streamutils.streamtry.KStreamTryValueMapper;
 import net.grayswander.streamutils.streamtry.ResultPair;
 import net.grayswander.streamutils.streamtry.KstreamTryFunction;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.kstream.Branched;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Named;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -40,25 +39,19 @@ public class Main {
         KStream<String, String> textLines = builder.stream(inputTopic);
         Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
-        KstreamTryFunction<String, String> kstreamTryFunction = KstreamTryFunction.of(TestProcessingFunctions::processFunc);
+        KStreamTryValueMapper<String, String> kStreamTryValueMapper = KStreamTryValueMapper.of(TestProcessingFunctions::processFunc);
 
-        Map<String, KStream<String, ResultPair<String, String>>> stringKStreamMap = textLines
-                .map((key, value) -> KeyValue.pair(key, value))
-                .mapValues(value -> kstreamTryFunction.apply(value))
-                .split(Named.as("Processing"))
-                .branch((key, value) -> value.isFailure(), Branched.as("Failed"))
-//                .branch((key, value) -> value.isSuccess(), Branched.as("Succeeded"))
-                .defaultBranch(Branched.as("Succeeded"));
+        KStream<String, ResultPair<String, String>> kStream = textLines
+                .mapValues(kStreamTryValueMapper);
 
-        stringKStreamMap.get("ProcessingSucceeded")
-                .mapValues(value -> value
-                        .getResult()
-                        .get())
-                .foreach((key, value) -> System.out.println(value));
+        DeadLetterQueueManager dlqManager = new DeadLetterQueueManager();
 
-        stringKStreamMap.get("ProcessingFailed")
-                .mapValues(value -> "Error: " + value.getInput()+ " -> " + value.getResult().getCause().getMessage())
-                .foreach((key, value) -> System.out.println(value));
+        KStream<String, String> processed = dlqManager.branchDlq(kStream, "TryOne");
+
+        processed.foreach((key, value) -> System.out.println("Processed: " + value));
+
+        dlqManager.mergeDeadLetterQueues().foreach((key, value) -> System.out.println("Failed: " + key + " -> " + value));
+
 
         Topology topology = builder.build();
         KafkaStreams streams = new KafkaStreams(topology, streamsConfiguration);
