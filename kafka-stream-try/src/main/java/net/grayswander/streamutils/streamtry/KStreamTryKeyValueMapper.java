@@ -9,16 +9,16 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 
 @Value
 @AllArgsConstructor
-public class KStreamTryKeyValueMapper<KEY, VALUE, OUTPUT> implements KeyValueMapper<KEY, VALUE, ResultPair<KeyValue<KEY, VALUE>, OUTPUT>> {
+public class KStreamTryKeyValueMapper<KEY, VALUE, KOUT, VOUT> implements KeyValueMapper<KEY, VALUE, KeyValue<String, ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>>> {
 
-    CheckedFunction2<KEY, VALUE, ? extends OUTPUT> function;
+    CheckedFunction2<KEY, VALUE, KeyValue<? extends KOUT, ? extends VOUT>> function;
 
-    public static <KEY, VALUE, OUTPUT> KStreamTryKeyValueMapper<KEY, VALUE, OUTPUT> of(CheckedFunction2<KEY, VALUE, ? extends OUTPUT> function) {
+    public static <KEY, VALUE, KOUT, VOUT> KStreamTryKeyValueMapper<KEY, VALUE, KOUT, VOUT> of(CheckedFunction2<KEY, VALUE, KeyValue<? extends KOUT, ? extends VOUT>> function) {
         return new KStreamTryKeyValueMapper<>(function);
     }
 
     @Override
-    public ResultPair<KeyValue<KEY, VALUE>, OUTPUT> apply(KEY key, VALUE value) {
-        return ResultPair.of(KeyValue.pair(key, value), Try.of(() -> function.apply(key, value)));
+    public KeyValue<String,ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>> apply(KEY key, VALUE value) {
+        return KeyValue.pair("DUMMY", ResultPair.of(KeyValue.pair(key, value), Try.of(() -> function.apply(key, value))));
     }
 }

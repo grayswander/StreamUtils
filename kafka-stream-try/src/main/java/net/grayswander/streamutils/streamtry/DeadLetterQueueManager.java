@@ -1,6 +1,7 @@
 package net.grayswander.streamutils.streamtry;
 
 import io.vavr.CheckedFunction1;
+import io.vavr.CheckedFunction2;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Branched;
@@ -17,7 +18,7 @@ public class DeadLetterQueueManager {
     private Map<String, KStream<?, DeadLetterQueueRecord<?>>> deadLetterQueues = new HashMap<>();
     private final String successDlqMessage = "Success";
 
-    public <K, VI, VO> KStream<K, VO> branchDeadLetterQueue(KStream<K, ResultPair<VI, VO>> kstream, String name) {
+    public <K, VI, VO> KStream<K, VO> branchDeadLetterQueue(String name, KStream<K, ResultPair<VI, VO>> kstream) {
         Map<String, KStream<K, ResultPair<VI, VO>>> branches =
                 kstream.split(Named.as(name))
                 .branch((key, value) -> value.isFailure(), Branched.as("Failure"))
@@ -60,8 +61,16 @@ public class DeadLetterQueueManager {
         return reduce.get();
     }
 
-    public <K, VI, VO> KStream<K, VO> mapValues(KStream<K, VI> kstream, CheckedFunction1<VI, VO> function, String name) {
-        return this.branchDeadLetterQueue(kstream.mapValues(KStreamTryValueMapper.of(function)), name);
+    public <K, VI, VO> KStream<K, VO> mapValues(String name, KStream<K, VI> kstream, CheckedFunction1<VI, VO> function) {
+        return this.branchDeadLetterQueue(name, kstream.mapValues(KStreamTryValueMapper.of(function)));
+    }
+
+    public <K, VI, VO> KStream<K, VO> mapValues(String name, KStream<K, VI> kstream, CheckedFunction2<K, VI, VO> function) {
+        return this.branchDeadLetterQueue(name, kstream.mapValues(KStreamTryValueMapperWithKey.of(function)));
+    }
+
+    public <K, VI, KO, VO> KStream<KO, VO> map(String name, KStream<K, VI> kstream, CheckedFunction2<K, VI, KeyValue<? extends KO, ? extends VO>> function) {
+        return this.branchDeadLetterQueue(name, kstream.map(KStreamTryKeyValueMapper.of(function))).map((key, value) -> value);
     }
 
     public Map<String, KStream<?, DeadLetterQueueRecord<?>>> getDeadLetterQueues() {

@@ -1,6 +1,4 @@
 import net.grayswander.streamutils.streamtry.DeadLetterQueueManager;
-import net.grayswander.streamutils.streamtry.KStreamTryValueMapper;
-import net.grayswander.streamutils.streamtry.ResultPair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.KStream;
@@ -9,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -39,7 +36,7 @@ public class Main {
 
         DeadLetterQueueManager dlqManager = new DeadLetterQueueManager();
 
-        KStream<String, String> processed = dlqManager.mapValues(textLines, TestProcessingFunctions::processFunc,"TryOne");
+        KStream<String, String> processed = dlqManager.mapValues("TryOne", textLines, TestProcessingFunctions::processFunc);
 
         processed.foreach((key, value) -> System.out.println("Processed: " + value));
 
