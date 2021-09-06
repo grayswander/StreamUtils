@@ -32,13 +32,14 @@ public class Main {
                 StreamsConfig.STATE_DIR_CONFIG, stateDirectory.toAbsolutePath().toString());
 
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, String> textLines = builder.stream(inputTopic);
+        KStream<String, String> textLines = builder.stream(inputTopic).map((key, value) -> KeyValue.pair("INk", (String) value));
 
         DeadLetterQueueManager dlqManager = new DeadLetterQueueManager();
 
-        KStream<String, String> processed = dlqManager.mapValues("TryOne", textLines, TestProcessingFunctions::processFunc);
+//        KStream<String, String> processed = dlqManager.mapValues("TryOne", textLines, TestProcessingFunctions::processFunc);
+        KStream<String, String> processed = dlqManager.map("TryOne", textLines, (s, s2) -> KeyValue.pair("PK" + s, TestProcessingFunctions.processFunc(s2)));
 
-        processed.foreach((key, value) -> System.out.println("Processed: " + value));
+        processed.foreach((key, value) -> System.out.println("Processed: " + key + " -> " + value));
 
         dlqManager.mergeDeadLetterQueues().foreach((key, value) -> System.out.println("Failed: " + key + " -> " + value));
 

@@ -9,7 +9,7 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 
 @Value
 @AllArgsConstructor
-public class KStreamTryKeyValueMapper<KEY, VALUE, KOUT, VOUT> implements KeyValueMapper<KEY, VALUE, KeyValue<String, ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>>> {
+public class KStreamTryKeyValueMapper<KEY, VALUE, KOUT, VOUT> implements KeyValueMapper<KEY, VALUE, KeyValue<KOUT, ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>>> {
 
     CheckedFunction2<KEY, VALUE, KeyValue<? extends KOUT, ? extends VOUT>> function;
 
@@ -18,7 +18,11 @@ public class KStreamTryKeyValueMapper<KEY, VALUE, KOUT, VOUT> implements KeyValu
     }
 
     @Override
-    public KeyValue<String,ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>> apply(KEY key, VALUE value) {
-        return KeyValue.pair("DUMMY", ResultPair.of(KeyValue.pair(key, value), Try.of(() -> function.apply(key, value))));
+    public KeyValue<KOUT,ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>> apply(KEY key, VALUE value) {
+        Try<KeyValue<? extends KOUT, ? extends VOUT>> aTry = Try.of(() -> function.apply(key, value));
+        ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>> resultPair = ResultPair.of(KeyValue.pair(key, value), aTry);
+
+        KeyValue<KOUT, ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>> keyValue = KeyValue.pair(null, resultPair);
+        return keyValue;
     }
 }
