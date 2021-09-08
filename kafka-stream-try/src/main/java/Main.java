@@ -48,7 +48,7 @@ public class Main {
         KafkaStreams streams = new KafkaStreams(topology, streamsConfiguration);
         streams.start();
 
-        Thread.sleep(30000);
+        Thread.sleep(300000);
         streams.close();
 
     }

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Branched;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Named;
 
 import java.util.Collection;
@@ -28,6 +29,28 @@ public class DeadLetterQueueManager {
         deadLetterQueues.put(name, failedStream.mapValues(this::buildDlqRecord));
 
         return branches.get(name+"Success").mapValues(value -> value.getResult().get());
+
+    }
+
+    public <K, KO, VI, VO> KStream<KO, VO> branchDeadLetterQueueForMap(String name, KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>>  kstream) {
+        Map<String, KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>>> branches = kstream.split(Named.as(name))
+                .branch((key, value) -> value.isFailure(), Branched.as("Failure"))
+                .defaultBranch(Branched.as("Success"));
+
+        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> failedStream =
+                branches.get(name + "Failure");
+        KStream<K, ResultPair<VI, VO>> pairKStream = failedStream.map(
+                (key, value) -> KeyValue.pair(value.getInput().key, ResultPair.ofFailure(
+                        value.getInput().value, value.getResult().getCause())
+                )
+        );
+        deadLetterQueues.put(name, pairKStream.mapValues(this::buildDlqRecord));
+
+        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> koResultPairKStream = branches.get(name + "Success");
+
+        KStream<KO, VO> map = koResultPairKStream.map((key, value) -> value.getResult().get());
+
+        return map;
 
     }
 
@@ -54,7 +77,11 @@ public class DeadLetterQueueManager {
                 .map(stringKStreamEntry -> {
                     String key = stringKStreamEntry.getKey();
                     KStream<?, DeadLetterQueueRecord<?>> stream = stringKStreamEntry.getValue();
-                    KStream<String, DeadLetterQueueRecord<? extends KeyValue<?, ?>>> kStream = stream.map((key1, value) -> KeyValue.pair(key, DeadLetterQueueRecord.of(KeyValue.pair(key1, value.getInput()), value.getError())));
+                    KStream<String, DeadLetterQueueRecord<? extends KeyValue<?, ?>>> kStream = stream.map(
+                            (key1, value) -> KeyValue.pair(key, DeadLetterQueueRecord.of(
+                                    KeyValue.pair(key1, value.getInput()), value.getError())
+                            )
+                    );
                     return kStream;
                 })
                 .reduce(KStream::merge);
@@ -70,7 +97,9 @@ public class DeadLetterQueueManager {
     }
 
     public <K, VI, KO, VO> KStream<KO, VO> map(String name, KStream<K, VI> kstream, CheckedFunction2<K, VI, KeyValue<? extends KO, ? extends VO>> function) {
-        return this.branchDeadLetterQueue(name, kstream.map(KStreamTryKeyValueMapper.of(function))).map((key, value) -> value);
+        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> map = kstream.map(KStreamTryKeyValueMapper.of(function));
+
+        return this.branchDeadLetterQueueForMap(name, kstream.map(KStreamTryKeyValueMapper.of(function)));
     }
 
     public Map<String, KStream<?, DeadLetterQueueRecord<?>>> getDeadLetterQueues() {
