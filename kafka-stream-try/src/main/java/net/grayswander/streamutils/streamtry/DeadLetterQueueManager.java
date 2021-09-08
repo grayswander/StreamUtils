@@ -6,7 +6,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Branched;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Named;
 
 import java.util.Collection;
@@ -16,7 +15,7 @@ import java.util.Optional;
 
 public class DeadLetterQueueManager {
 
-    private Map<String, KStream<?, DeadLetterQueueRecord<?>>> deadLetterQueues = new HashMap<>();
+    private final Map<String, KStream<?, DeadLetterQueueRecord<?>>> deadLetterQueues = new HashMap<>();
     private final String successDlqMessage = "Success";
 
     public <K, VI, VO> KStream<K, VO> branchDeadLetterQueue(String name, KStream<K, ResultPair<VI, VO>> kstream) {
@@ -37,20 +36,16 @@ public class DeadLetterQueueManager {
                 .branch((key, value) -> value.isFailure(), Branched.as("Failure"))
                 .defaultBranch(Branched.as("Success"));
 
-        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> failedStream =
-                branches.get(name + "Failure");
-        KStream<K, ResultPair<VI, VO>> pairKStream = failedStream.map(
+        KStream<K, ResultPair<VI, VO>> failedStream =
+                branches.get(name + "Failure").map(
                 (key, value) -> KeyValue.pair(value.getInput().key, ResultPair.ofFailure(
                         value.getInput().value, value.getResult().getCause())
                 )
-        );
-        deadLetterQueues.put(name, pairKStream.mapValues(this::buildDlqRecord));
+        );;
 
-        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> koResultPairKStream = branches.get(name + "Success");
+        deadLetterQueues.put(name, failedStream.mapValues(this::buildDlqRecord));
 
-        KStream<KO, VO> map = koResultPairKStream.map((key, value) -> value.getResult().get());
-
-        return map;
+        return branches.get(name + "Success").map((key, value) -> value.getResult().get());
 
     }
 
