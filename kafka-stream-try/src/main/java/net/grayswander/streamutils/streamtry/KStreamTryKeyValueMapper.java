@@ -20,9 +20,7 @@ public class KStreamTryKeyValueMapper<KEY, VALUE, KOUT, VOUT> implements KeyValu
     @Override
     public KeyValue<KOUT,ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>> apply(KEY key, VALUE value) {
         Try<KeyValue<? extends KOUT, ? extends VOUT>> aTry = Try.of(() -> function.apply(key, value));
-        ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>> resultPair = ResultPair.of(KeyValue.pair(key, value), aTry);
-
-        KeyValue<KOUT, ResultPair<KeyValue<KEY, VALUE>, KeyValue<? extends KOUT, ? extends VOUT>>> keyValue = KeyValue.pair(null, resultPair);
-        return keyValue;
+        KOUT keyOut = aTry.getOrElse(() -> KeyValue.pair(null, null)).key;
+        return KeyValue.pair(keyOut, ResultPair.of(KeyValue.pair(key, value), aTry));
     }
 }
