@@ -92,7 +92,7 @@ public class DeadLetterQueueManager {
     }
 
     public <K, VI, KO, VO> KStream<KO, VO> map(String name, KStream<K, VI> kstream, CheckedFunction2<K, VI, KeyValue<? extends KO, ? extends VO>> function) {
-        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> map = kstream.map(KStreamTryKeyValueMapper.of(function));
+//        KStream<KO, ResultPair<KeyValue<K, VI>, KeyValue<? extends KO, ? extends VO>>> map = kstream.map(KStreamTryKeyValueMapper.of(function));
 
         return this.branchDeadLetterQueueForMap(name, kstream.map(KStreamTryKeyValueMapper.of(function)));
     }
